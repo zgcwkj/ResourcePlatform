@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zgcwkj.mapper.SroledetailMapper">
+
+	<!-- 通用查询映射结果 -->
+	<resultMap id="BaseResultMap" type="com.zgcwkj.entity.Sroledetail">
+		<id column="roledetailid" property="roledetailid" />
+		<result column="roleid" property="roleid" />
+		<result column="menuid" property="menuid" />
+		<result column="behavior" property="behavior" />
+	</resultMap>
+
+</mapper>

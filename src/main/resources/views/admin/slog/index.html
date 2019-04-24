@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>日志管理</title>
+    <meta charset="UTF-8">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width">
+    <link href="/layui/css/layui.css" rel="stylesheet" />
+    <script src="/layui/layui.js"></script>
+</head>
+<body style="background:#fff;margin:20px;">
+    <div class="wrap-container clearfix">
+        <div class="column-content-detail">
+            <div class="layui-form">
+                <div class="layui-form-item">
+                    <div class="layui-inline">
+                        <input type="text" class="layui-input" id="beginDate" name="beginDate" placeholder="起始时间">
+                    </div>
+                    <div class="layui-inline">
+                        <input type="text" class="layui-input" id="endDate" name="endDate" placeholder="结束时间">
+                    </div>
+                    <div class="layui-inline">
+                        <input type="text" class="layui-input" id="keyWord" name="keyWord" placeholder="关键字">
+                    </div>
+                    <div class="layui-inline">
+                        <button class="layui-btn" onclick="searchBtn()">搜索</button>
+                        <button class="layui-btn layui-btn-danger" onclick="deleteBtn()">删除</button>
+                        <button class="layui-btn layui-btn-warm" onclick="printBtn()">打印</button>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-form" id="table-list">
+                <table class="layui-table" id="TableData" lay-even lay-skin="nob"></table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var $, layer, table, laydate, form, upload;
+        layui.use(['jquery', 'layer', 'table', 'laydate', 'form', 'upload'], function () {
+            $ = layui.jquery, layer = layui.layer, table = layui.table, laydate = layui.laydate, form = layui.form, upload = layui.upload;
+            //可以选择的最大时间
+            var nowTime = new Date();
+            //起始时间
+            var beginDate = laydate.render({
+                elem: '#beginDate',
+                type: 'datetime',
+                btns: ['confirm'],
+                max: 'nowTime',//默认最大值为当前日期
+                done: function (value, date) {
+                    endDate.config.min = {
+                        year: date.year,
+                        month: date.month - 1,//关键
+                        date: date.date,
+                        hours: date.hours,
+                        minutes: date.minutes,
+                        seconds: date.seconds
+                    }
+                }
+            });
+            //结束时间
+            var endDate = laydate.render({
+                elem: '#endDate',
+                type: 'datetime',
+                btns: ['confirm'],
+                max: 'nowTime',
+                done: function (value, date) {
+                    beginDate.config.max = {
+                        year: date.year,
+                        month: date.month - 1,//关键
+                        date: date.date,
+                        hours: date.hours,
+                        minutes: date.minutes,
+                        seconds: date.seconds
+                    }
+                }
+            });
+            //表格绑定
+            table.render({
+                elem: '#TableData',
+                url: '/admin/slog/inquire',
+                page: true,
+                method: 'post',
+                cellMinWidth: 80,
+                request: {
+                    pageName: 'page',//页码的参数名称，默认：page
+                    limitName: 'pageSize',//每页数据量的参数名，默认：limit
+                },
+                parseData: function (res) {
+                    return {
+                        "code": res.code,//解析接口状态
+                        "msg": res.msg,//解析提示文本
+                        "count": res.count,//解析数据长度
+                        "data": res.data,//解析数据列表
+                    };
+                },
+                where: {
+                    beginDate: '',
+                    endDate: '',
+                    keyWord: '',
+                },
+                done: function (res, curr, count) {
+                    //console.log(res);//你接口返回的信息
+                    //console.log(curr);//得到当前页码
+                    //console.log(count);//得到数据总量
+                    //RoleControl();//加载成功时执行
+                },
+                cols: [[
+                    { type: 'checkbox', fixed: 'left' },
+                    { type: 'numbers', title: '序号', fixed: 'left' },
+                    //{field:'logid', title: '用户ID', sort: true},
+                    { field: 'url', title: '地址', sort: true },
+                    { field: 'parameter', title: '参数' },
+                    { field: 'operattime', title: '时间' },
+                ]]
+            });
+        });
+        //搜索按鈕
+        function searchBtn() {
+            table.reload('TableData', {
+                where: {
+                    beginDate: $("#beginDate").val(),
+                    endDate: $("#endDate").val(),
+                    keyWord: $("#keyWord").val(),
+                }
+            });
+        }
+        //删除按鈕
+        function deleteBtn(index) {
+            var deleteID = "";
+            if (index == null) {
+                //多选（通过便利表格所选择数据）
+                var checkStatus = table.checkStatus('TableData');
+                var checkData = checkStatus.data; //得到选中的数据
+                if (checkData.length === 0) {
+                    return layer.msg('请选择数据');
+                }
+                for (var i = 0; i < checkData.length; i++) {
+                    deleteID += checkData[i].logid + ",";
+                    if (i == checkData.length - 1) {
+                        deleteID = deleteID.substring(0, deleteID.length - 1);
+                    }
+                }
+            } else {
+                //单选（通过表格数据选择删除）
+                var getData = table.cache.TableData;
+                var row = getData[index];
+                deleteID = row.logid;
+            }
+            //提交数据到后台删除
+            layer.confirm('确定删除吗？', function (index) {
+                $.post("/admin/slog/delete", {
+                    ids: deleteID
+                }, function (data) {
+                    if (data.code == "1") {
+                        searchBtn();
+                    }
+                    layer.msg(data.msg);
+                })
+            })
+        }
+    </script>
+</body>
+</html>
