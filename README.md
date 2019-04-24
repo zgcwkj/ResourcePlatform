@@ -1,6 +1,4 @@
-# ResourcePlatform
-
-Java 项目
+# Java 项目 资源平台
 
 整合 SpringBoot + MybatisPlus + Shiro
 
